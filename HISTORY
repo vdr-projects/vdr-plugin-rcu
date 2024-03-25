@@ -28,3 +28,7 @@ VDR Plugin 'rcu' Revision History
 2015-02-19: Version 2.2.0
 
 - Official release.
+
+2018-12-17: Version 2.2.01
+
+- Fixed setting points for recording devices.

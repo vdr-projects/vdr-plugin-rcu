@@ -3,7 +3,7 @@
  *
  * See the README file for copyright information and how to reach the author.
  *
- * $Id: rcu.c 3.2 2015/02/17 13:13:00 kls Exp $
+ * $Id: rcu.c 5.1 2018/12/17 10:22:54 kls Exp $
  */
 
 #include <getopt.h>
@@ -16,19 +16,21 @@
 #include <vdr/thread.h>
 #include <vdr/tools.h>
 
-static const char *VERSION        = "2.2.0";
+static const char *VERSION        = "2.2.1";
 static const char *DESCRIPTION    = "Remote Control Unit";
 
 #define REPEATLIMIT      150 // ms
 #define REPEATDELAY      350 // ms
 #define HANDSHAKETIMEOUT  20 // ms
 #define DEFAULTDEVICE    "/dev/ttyS1"
+#define MAXPOINTS        4
 
 class cRcuRemote : public cRemote, private cThread, private cStatus {
 private:
   enum { modeH = 'h', modeB = 'b', modeS = 's' };
   int f;
   unsigned char dp, code, mode;
+  unsigned char counter[MAXPOINTS];
   int number;
   unsigned int data;
   bool receivedCommand;
@@ -60,6 +62,7 @@ cRcuRemote::cRcuRemote(const char *DeviceName)
   dp = 0;
   mode = modeB;
   code = 0;
+  memset(counter, 0x00, sizeof(counter));
   number = 0;
   data = 0;
   receivedCommand = false;
@@ -361,7 +364,11 @@ void cRcuRemote::ChannelSwitch(const cDevice *Device, int ChannelNumber, bool Li
 
 void cRcuRemote::Recording(const cDevice *Device, const char *Name, const char *FileName, bool On)
 {
-  SetPoints(1 << Device->DeviceNumber(), Device->Receiving());
+  int n = Device->DeviceNumber();
+  if (n < MAXPOINTS) {
+     counter[n] += On ? 1 : -1;
+     SetPoints(1 << Device->DeviceNumber(), counter[n]);
+     }
 }
 
 class cPluginRcu : public cPlugin {
